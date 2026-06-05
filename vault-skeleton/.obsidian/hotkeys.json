@@ -1,0 +1,8 @@
+{
+  "quickadd:choice:qa-inbox": [{"modifiers": ["Mod", "Shift"], "key": "I"}],
+  "quickadd:choice:qa-meeting": [{"modifiers": ["Mod", "Shift"], "key": "M"}],
+  "quickadd:choice:qa-deal": [{"modifiers": ["Mod", "Shift"], "key": "L"}],
+  "quickadd:choice:qa-decision": [{"modifiers": ["Mod", "Shift"], "key": "K"}],
+  "workspace:reveal-active-file": [{"modifiers": ["Mod", "Shift"], "key": "."}],
+  "graph:open-local": [{"modifiers": ["Mod", "Shift"], "key": "G"}]
+}

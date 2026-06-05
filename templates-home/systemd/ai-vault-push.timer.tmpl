@@ -1,0 +1,11 @@
+[Unit]
+Description=Auto-push Obsidian vault every 30 minutes (fallback for when Obsidian app not running)
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=ai-vault-push.service
+
+[Install]
+WantedBy=timers.target

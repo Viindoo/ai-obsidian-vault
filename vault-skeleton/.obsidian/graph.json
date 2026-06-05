@@ -1,0 +1,107 @@
+{
+  "collapse-filter": true,
+  "search": "",
+  "showTags": false,
+  "showAttachments": false,
+  "hideUnresolved": true,
+  "showOrphans": true,
+  "collapse-color-groups": false,
+  "colorGroups": [
+    {
+      "query": "tag:#domain/strategy",
+      "color": {
+        "a": 1,
+        "rgb": 4485892
+      }
+    },
+    {
+      "query": "tag:#domain/sales",
+      "color": {
+        "a": 1,
+        "rgb": 14431557
+      }
+    },
+    {
+      "query": "tag:#domain/marketing",
+      "color": {
+        "a": 1,
+        "rgb": 16744448
+      }
+    },
+    {
+      "query": "tag:#domain/product",
+      "color": {
+        "a": 1,
+        "rgb": 9510622
+      }
+    },
+    {
+      "query": "tag:#domain/eng",
+      "color": {
+        "a": 1,
+        "rgb": 8421504
+      }
+    },
+    {
+      "query": "tag:#domain/ops",
+      "color": {
+        "a": 1,
+        "rgb": 4382208
+      }
+    },
+    {
+      "query": "tag:#domain/people",
+      "color": {
+        "a": 1,
+        "rgb": 16766720
+      }
+    },
+    {
+      "query": "tag:#activity/decision",
+      "color": {
+        "a": 1,
+        "rgb": 16776960
+      }
+    },
+    {
+      "query": "tag:#activity/competitor",
+      "color": {
+        "a": 1,
+        "rgb": 10764031
+      }
+    },
+    {
+      "query": "tag:#activity/deal",
+      "color": {
+        "a": 1,
+        "rgb": 16711680
+      }
+    },
+    {
+      "query": "path:Daily",
+      "color": {
+        "a": 1,
+        "rgb": 12632256
+      }
+    },
+    {
+      "query": "path:Templates",
+      "color": {
+        "a": 1,
+        "rgb": 5263440
+      }
+    }
+  ],
+  "collapse-display": true,
+  "showArrow": false,
+  "textFadeMultiplier": 0,
+  "nodeSizeMultiplier": 1,
+  "lineSizeMultiplier": 1,
+  "collapse-forces": true,
+  "centerStrength": 0.518713248970312,
+  "repelStrength": 10,
+  "linkStrength": 1,
+  "linkDistance": 250,
+  "scale": 0.2962962962962961,
+  "close": true
+}

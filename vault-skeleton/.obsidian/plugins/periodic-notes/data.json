@@ -1,0 +1,74 @@
+{
+  "installedVersion": "1.0.0-beta1",
+  "activeCalendarSet": "Default",
+  "showGettingStartedBanner": false,
+  "hasMigratedDailyNoteSettings": true,
+  "hasMigratedWeeklyNoteSettings": true,
+  "calendarSets": [
+    {
+      "day": {
+        "format": "YYYY-MM-DD",
+        "folder": "Daily/YYYY/MM",
+        "openAtStartup": false,
+        "templatePath": "Templates/Daily Note.md"
+      },
+      "week": {
+        "format": "gggg-[W]ww",
+        "folder": "Daily/YYYY/Weekly",
+        "openAtStartup": false,
+        "templatePath": "Templates/Weekly Review.md"
+      },
+      "month": {
+        "format": "YYYY-MM",
+        "folder": "Daily/YYYY/Monthly",
+        "openAtStartup": false,
+        "templatePath": "Templates/Monthly Review.md"
+      },
+      "quarter": {
+        "format": "YYYY-[Q]Q",
+        "folder": "Operations/OKRs",
+        "openAtStartup": false,
+        "templatePath": "Templates/Quarterly Review.md"
+      },
+      "year": {
+        "format": "YYYY",
+        "folder": "Daily",
+        "openAtStartup": false,
+        "templatePath": "Templates/Yearly Review.md"
+      },
+      "id": "Default",
+      "ctime": "2026-01-01T00:00:00+00:00"
+    }
+  ],
+  "enableTimelineComplication": true,
+  "daily": {
+    "available": true,
+    "format": "YYYY-MM-DD",
+    "folder": "Daily/YYYY/MM",
+    "template": "Templates/Daily Note.md"
+  },
+  "weekly": {
+    "available": true,
+    "format": "gggg-[W]ww",
+    "folder": "Daily/YYYY/Weekly",
+    "template": "Templates/Weekly Review.md"
+  },
+  "monthly": {
+    "available": true,
+    "format": "YYYY-MM",
+    "folder": "Daily/YYYY/Monthly",
+    "template": "Templates/Monthly Review.md"
+  },
+  "quarterly": {
+    "available": true,
+    "format": "YYYY-[Q]Q",
+    "folder": "Operations/OKRs",
+    "template": "Templates/Quarterly Review.md"
+  },
+  "yearly": {
+    "available": true,
+    "format": "YYYY",
+    "folder": "Daily",
+    "template": "Templates/Yearly Review.md"
+  }
+}

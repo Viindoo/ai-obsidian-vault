@@ -1,0 +1,54 @@
+name: Regenerate AI-Memory search index + digest
+
+on:
+  push:
+    branches: [master]
+    # NOTE: GitHub does not allow both `paths` and `paths-ignore` on the same
+    # event. `paths` already scopes to source memory dirs; _index/ and
+    # _digest.md are siblings (not under these paths) so a push that only
+    # touches them won't match - no self-retrigger. The regen commit also
+    # carries [skip ci].
+    paths:
+      - 'Engineering/AI-Memory/sessions/**'
+      - 'Engineering/AI-Memory/failures/**'
+      - 'Engineering/AI-Memory/patterns/**'
+      - 'Engineering/AI-Memory/orchestrations/**'
+      - 'Engineering/AI-Memory/_core-memory.md'
+  workflow_dispatch:
+
+jobs:
+  regen-index:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history needed so the commit push doesn't fail on force-push guards
+          fetch-depth: 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install pyyaml
+        run: pip install pyyaml
+
+      - name: Regenerate AI-Memory index
+        run: bash _scripts/regen-ai-memory-index.sh "$GITHUB_WORKSPACE"
+
+      - name: Regenerate AI-Memory digest
+        run: bash _scripts/gen-memory-digest.sh "$GITHUB_WORKSPACE"
+
+      - name: Commit index + digest if changed
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Engineering/AI-Memory/_index/ Engineering/AI-Memory/_digest.md
+          if git diff --cached --quiet; then
+            echo "No index/digest changes - nothing to commit."
+          else
+            git commit -m "chore(index): regen AI-Memory search index + digest [skip ci]"
+            git push
+          fi

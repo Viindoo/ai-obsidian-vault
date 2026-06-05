@@ -1,0 +1,30 @@
+# AI-Memory data paths: protect from upstream overwrites during `git merge upstream`
+# These paths contain member-specific data that must not be clobbered by upstream changes.
+# `merge=ours` means: if there is a conflict on these paths, keep OUR version.
+#
+# To activate: run `git config merge.ours.driver true` once per clone after setup.
+
+Engineering/AI-Memory/sessions/**              merge=ours
+Engineering/AI-Memory/failures/**              merge=ours
+Engineering/AI-Memory/patterns/**              merge=ours
+Engineering/AI-Memory/orchestrations/**        merge=ours
+Engineering/AI-Memory/_core-memory.md          merge=ours
+Engineering/AI-Memory/auto/MEMORY.md           merge=ours
+
+# Domain data folders (if populated by member): protect personal notes
+# Uncomment the domains you actively use to protect them from upstream drift.
+# Strategy/**                                  merge=ours
+# Sales/**                                     merge=ours
+# Daily/**                                     merge=ours
+
+# Normalize line endings to LF for all text files
+* text=auto eol=lf
+
+# Binary files - do not attempt text diff
+_attachments/*.png      binary
+_attachments/*.jpg      binary
+_attachments/*.jpeg     binary
+_attachments/*.gif      binary
+_attachments/*.webp     binary
+_attachments/*.pdf      binary
+_attachments/*.zip      binary

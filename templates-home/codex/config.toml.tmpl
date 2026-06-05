@@ -1,0 +1,53 @@
+# Codex CLI config template - rendered by wire-runtimes.sh via envsubst
+# Placeholders: ${VAULT_PATH}, ${HOME}
+# After rendering, open Codex and run /hooks in the TUI to TRUST the SessionStart hook.
+# (Codex requires interactive trust; the session silently skips untrusted hooks.)
+
+# ---- Project trust --------------------------------------------------------
+[projects."${HOME}"]
+trust_level = "trusted"
+
+[projects."${VAULT_PATH}"]
+trust_level = "trusted"
+
+# ---- MCP servers ----------------------------------------------------------
+# Filesystem MCP - structured read/write access to the vault (AI-Memory)
+[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "@modelcontextprotocol/server-filesystem", "${VAULT_PATH}"]
+
+# Optional browser tooling - uncomment if member uses browser automation
+# [mcp_servers.chrome-devtools]
+# command = "npx"
+# args = ["-y", "chrome-devtools-mcp@latest"]
+
+# [mcp_servers.playwright]
+# command = "npx"
+# args = ["-y", "@playwright/mcp@latest", "--caps=devtools"]
+
+# ---- SessionStart hook ----------------------------------------------------
+# Injects ETHOS + AI-Memory digest at the start of each session.
+# Codex has no @import - this hook is the equivalent of Claude's @import.
+#
+# IMPORTANT: After wiring this config, run `codex` and type /hooks in the TUI.
+# Without this trust step, the hook is silently skipped.
+[[hooks.SessionStart]]
+matcher = "startup|resume|clear|compact"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "${VAULT_PATH}/_scripts/load-context-hook.sh"
+statusMessage = "Loading ETHOS + AI-Memory digest"
+
+# trusted_hash is written here by Codex after /hooks trust step.
+# Do NOT manually populate - Codex manages this section.
+[hooks.state]
+
+# ---- SessionStop (sentinel) hook ------------------------------------------
+# Writes a sentinel entry so the next session detects unprocessed memory.
+# Unlike SessionStart, Stop does not require TUI trust for the sentinel write.
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "${VAULT_PATH}/_scripts/session-end-sentinel.sh codex-cli"

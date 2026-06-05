@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# Vault PII pre-commit scan
+# Blocks commit if staged content matches sensitive patterns.
+# Override: SKIP_PII_SCAN=1 git commit ...
+set -euo pipefail
+
+if [[ "${SKIP_PII_SCAN:-0}" == "1" ]]; then
+  echo "WARNING: PII scan SKIPPED (SKIP_PII_SCAN=1)" >&2
+  exit 0
+fi
+
+# Get staged additions only (not removed lines)
+# Exclude binary assets + plugin code (third-party)
+DIFF=$(git diff --cached --diff-filter=ACM -U0 \
+  -- ':(exclude).obsidian/plugins' ':(exclude)_assets' \
+  || true)
+if [[ -z "$DIFF" ]]; then
+  exit 0
+fi
+
+# Patterns: name|regex (extended)
+declare -a PATTERNS=(
+  "CCCD/CMND 12 digits|^\+.*\b[0-9]{12}\b"
+  "Phone + sensitive keyword|^\+.*\b(otp|password|secret|key|token|auth|sms)\b.{0,30}\b0[3-9][0-9]{8}\b"
+  "Phone bulk (10+ in one diff hunk)|^\+.*(0[3-9][0-9]{8}.*){10,}"
+  "IBAN|^\+.*\b[A-Z]{2}[0-9]{2}[A-Z0-9]{11,30}\b"
+  "Bank account 10-16 digits + keyword|^\+.*(stk|account|tk).{0,20}[0-9]{10,16}\b"
+  "Generic password=...|^\+.*\b(password|passwd|pwd)\s*[:=]\s*\S{6,}"
+  "API key generic|^\+.*\b(api[_-]?key|secret[_-]?key|access[_-]?token|bearer)\s*[:=]\s*[\"']?[A-Za-z0-9_\-]{20,}"
+  "AWS access key|^\+.*\bAKIA[0-9A-Z]{16}\b"
+  "GitHub token|^\+.*\bghp_[A-Za-z0-9]{36}\b"
+  "Private key header|^\+.*-----BEGIN (RSA |OPENSSH |EC |DSA |)PRIVATE KEY-----"
+  ".env or *.pem committed|^\+\+\+ b/(.*\.env(\..*)?$|.*\.pem$|.*\.key$|.*credentials.*\.json$)"
+)
+
+# Company/customer denylist - configurable (add terms to VAULT_PII_DENYLIST env var,
+# comma-separated, or extend the list below for your org)
+# Example: VAULT_PII_DENYLIST="AcmeCorp,ContractorX" git commit ...
+DENYLIST_TERMS="${VAULT_PII_DENYLIST:-}"
+
+# Personal email pattern handled separately: needs PII-OK bypass filter
+PERSONAL_EMAIL_PAT='^\+.*\b[a-z0-9._%+-]+@(gmail|yahoo|hotmail|outlook|icloud|live|aol)\.com\b'
+PERSONAL_EMAIL_BYPASS='(#|<!--)\s*PII-OK:'
+
+FOUND=0
+REPORT=""
+
+for entry in "${PATTERNS[@]}"; do
+  name="${entry%%|*}"
+  pat="${entry#*|}"
+  matches=$(echo "$DIFF" | grep -inE "$pat" || true)
+  if [[ -n "$matches" ]]; then
+    FOUND=1
+    REPORT+=$'\n  x '"$name"$'\n'"$(echo "$matches" | sed 's/^/      /' | head -5)"$'\n'
+  fi
+done
+
+# Personal email check (with PII-OK bypass)
+personal_email_matches=$(echo "$DIFF" | grep -inE "$PERSONAL_EMAIL_PAT" | grep -ivE "$PERSONAL_EMAIL_BYPASS" || true)
+if [[ -n "$personal_email_matches" ]]; then
+  FOUND=1
+  REPORT+=$'\n  x Personal email address\n'"$(echo "$personal_email_matches" | sed 's/^/      /' | head -5)"$'\n'
+fi
+
+# Configurable denylist check
+if [[ -n "$DENYLIST_TERMS" ]]; then
+  IFS=',' read -ra TERMS <<< "$DENYLIST_TERMS"
+  for term in "${TERMS[@]}"; do
+    term=$(echo "$term" | xargs)  # trim whitespace
+    [[ -z "$term" ]] && continue
+    denylist_matches=$(echo "$DIFF" | grep -in "^\+.*${term}" || true)
+    if [[ -n "$denylist_matches" ]]; then
+      FOUND=1
+      REPORT+=$'\n  x Denylist term: '"$term"$'\n'"$(echo "$denylist_matches" | sed 's/^/      /' | head -5)"$'\n'
+    fi
+  done
+fi
+
+if [[ "$FOUND" == "1" ]]; then
+  echo "PII scan blocked commit. Sensitive patterns detected:" >&2
+  echo -e "$REPORT" >&2
+  echo "" >&2
+  echo "If false positive, override with: SKIP_PII_SCAN=1 git commit ..." >&2
+  echo "  Or annotate the line with: # PII-OK: <reason>  (or <!-- PII-OK: --> in Markdown/HTML)" >&2
+  exit 1
+fi
+
+echo "PII scan passed."
+
+# ---------------------------------------------------------------------------
+# Drift warning: check if critical infrastructure files changed without
+# updating the setup guide. This is a WARNING only - it does NOT block commits.
+# ---------------------------------------------------------------------------
+SETUP_GUIDE="docs/SETUP-GUIDE.md"
+
+CRITICAL_FILES=(
+  "ETHOS.md"
+  "CLAUDE.md"
+  "AGENTS.md"
+  "GEMINI.md"
+  ".github/hooks/pre-commit"
+  ".claude/skills"
+  ".codex/skills"
+  ".gemini/skills"
+  "templates-home"
+)
+
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM 2>/dev/null || true)
+
+CRITICAL_STAGED=""
+for cf in "${CRITICAL_FILES[@]}"; do
+  if echo "$STAGED_FILES" | grep -q "^${cf}"; then
+    CRITICAL_STAGED="${CRITICAL_STAGED} ${cf}"
+  fi
+done
+
+SETUP_STAGED=$(echo "$STAGED_FILES" | grep -q "^${SETUP_GUIDE}" && echo "yes" || echo "no")
+
+if [[ -n "$CRITICAL_STAGED" && "$CRITICAL_STAGED" != " " && "$SETUP_STAGED" == "no" ]]; then
+  echo "" >&2
+  echo "WARNING: Critical infrastructure file(s) changed but SETUP-GUIDE.md was not updated." >&2
+  echo "  Changed:${CRITICAL_STAGED}" >&2
+  echo "  Consider updating: ${SETUP_GUIDE}" >&2
+  echo "" >&2
+fi
+
+exit 0

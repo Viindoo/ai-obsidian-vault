@@ -1,0 +1,5 @@
+# Allowlist cho sanitize-template.sh - 1 bash ERE pattern / dong.
+# URL repo public cua to chuc (member clone tu day) - hop le, khong phai leak data.
+Viindoo/ai-obsidian-vault
+github\.com[:/]Viindoo
+Viindoo Technology Joint Stock Company

@@ -1,0 +1,38 @@
+# Text normalization - ensure consistent line endings in the repository
+* text=auto
+
+# Shell scripts must use LF (Unix) line endings regardless of OS
+*.sh text eol=lf
+
+# Config and template files - LF
+*.toml text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.tmpl text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+
+# macOS plist files - LF
+*.plist text eol=lf
+
+# Binary files - no text processing
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.zip binary
+
+# Member data paths - merge=ours protects local member data during upstream updates.
+# The merge driver must be registered locally: git config merge.ours.driver true
+# vault-skeleton/Engineering/AI-Memory/sessions/** merge=ours
+# vault-skeleton/Engineering/AI-Memory/failures/** merge=ours
+# vault-skeleton/Engineering/AI-Memory/patterns/** merge=ours
+# vault-skeleton/Engineering/AI-Memory/orchestrations/** merge=ours
+# vault-skeleton/Engineering/AI-Memory/auto/** merge=ours
+# vault-skeleton/Engineering/AI-Memory/_core-memory.md merge=ours
+# vault-skeleton/Inbox/** merge=ours
+# vault-skeleton/Daily/** merge=ours
+# vault-skeleton/Projects/** merge=ours

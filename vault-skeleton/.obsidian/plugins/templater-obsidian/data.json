@@ -1,0 +1,155 @@
+{
+  "command_timeout": 5,
+  "templates_folder": "Templates",
+  "templates_pairs": [
+    ["", ""]
+  ],
+  "trigger_on_file_creation": true,
+  "auto_jump_to_cursor": true,
+  "enable_system_commands": false,
+  "shell_path": "",
+  "user_scripts_folder": "",
+  "enable_folder_templates": true,
+  "folder_templates": [
+    {
+      "folder": "Sales/Pipeline",
+      "template": "Templates/Deal Log.md"
+    },
+    {
+      "folder": "Sales/Customers",
+      "template": "Templates/Customer Profile.md"
+    },
+    {
+      "folder": "Sales/Discovery",
+      "template": "Templates/Meeting Note.md"
+    },
+    {
+      "folder": "Strategy/Briefs",
+      "template": "Templates/Brief 1-Pager.md"
+    },
+    {
+      "folder": "Strategy/Decisions",
+      "template": "Templates/Decision Record.md"
+    },
+    {
+      "folder": "Marketing/Campaigns",
+      "template": "Templates/Campaign Plan.md"
+    },
+    {
+      "folder": "Engineering/Decisions",
+      "template": "Templates/Decision Record.md"
+    },
+    {
+      "folder": "Engineering/Debug-Notes",
+      "template": "Templates/Debug Note.md"
+    },
+    {
+      "folder": "Engineering/Failure-Log",
+      "template": "Templates/Failure Log.md"
+    },
+    {
+      "folder": "Operations/Meetings",
+      "template": "Templates/Meeting Note.md"
+    },
+    {
+      "folder": "Operations/Board",
+      "template": "Templates/Board Brief.md"
+    },
+    {
+      "folder": "Operations/Processes",
+      "template": "Templates/Process.md"
+    },
+    {
+      "folder": "Resources/Competitors",
+      "template": "Templates/Competitor Watch.md"
+    },
+    {
+      "folder": "Resources/Research",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Sales/Proposals",
+      "template": "Templates/Brief 1-Pager.md"
+    },
+    {
+      "folder": "Sales/Email-Drafts",
+      "template": "Templates/Brief 1-Pager.md"
+    },
+    {
+      "folder": "Marketing/Blog",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Marketing/Landing",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Marketing/Social",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Marketing/SEO-Keywords",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Product/BRD",
+      "template": "Templates/Product Note.md"
+    },
+    {
+      "folder": "Product/SRS",
+      "template": "Templates/Product Note.md"
+    },
+    {
+      "folder": "Product/Roadmap",
+      "template": "Templates/Product Note.md"
+    },
+    {
+      "folder": "Product/Releases",
+      "template": "Templates/Product Note.md"
+    },
+    {
+      "folder": "Engineering/Architecture",
+      "template": "Templates/Decision Record.md"
+    },
+    {
+      "folder": "Engineering/Reviews",
+      "template": "Templates/Decision Record.md"
+    },
+    {
+      "folder": "Operations/Hiring",
+      "template": "Templates/Process.md"
+    },
+    {
+      "folder": "Resources/Market",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Resources/Learning",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "Inbox/Ideas",
+      "template": "Templates/Research.md"
+    },
+    {
+      "folder": "People/Team",
+      "template": "Templates/Customer Profile.md"
+    },
+    {
+      "folder": "People/Partners",
+      "template": "Templates/Customer Profile.md"
+    },
+    {
+      "folder": "People/Investors",
+      "template": "Templates/Customer Profile.md"
+    },
+    {
+      "folder": "People/Advisors",
+      "template": "Templates/Customer Profile.md"
+    }
+  ],
+  "syntax_highlighting": true,
+  "syntax_highlighting_mobile": false,
+  "enabled_templates_hotkeys": [""],
+  "startup_templates": [""]
+}
