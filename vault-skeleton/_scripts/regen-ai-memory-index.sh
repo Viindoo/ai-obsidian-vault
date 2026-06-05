@@ -1,0 +1,258 @@
+#!/usr/bin/env bash
+# regen-ai-memory-index.sh - regenerate flat grep-friendly search indexes for AI-Memory
+#
+# USAGE
+#   bash _scripts/regen-ai-memory-index.sh [VAULT_ROOT]
+#
+# OUTPUT
+#   Engineering/AI-Memory/_index/failures-by-pattern.txt
+#   Engineering/AI-Memory/_index/sessions-by-agent.txt
+#   Engineering/AI-Memory/_index/patterns-by-domain.txt
+#   Engineering/AI-Memory/_index/orchestrations-by-shape.txt
+#
+# DESIGN DECISIONS
+#   - Script lives in _scripts/ (tracked by git) so it can be cloned on new machines.
+#     _local/ is gitignored per .gitignore - scripts placed there would not be
+#     committed and would need manual recreation after each clone. _scripts/ avoids
+#     that trade-off.
+#   - Python 3 with pyyaml preferred; falls back to regex if pyyaml not installed.
+#   - Output files carry "DO NOT EDIT" header; idempotent reruns overwrite cleanly.
+#   - Target: <2s for 50 notes on any modern machine.
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VAULT_ROOT="${1:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+
+AI_MEMORY="$VAULT_ROOT/Engineering/AI-Memory"
+INDEX_DIR="$AI_MEMORY/_index"
+
+mkdir -p "$INDEX_DIR"
+
+GENERATED_DATE="$(date '+%Y-%m-%d %H:%M:%S')"
+
+# ---------------------------------------------------------------------------
+# Python parser - robust against schema v3 frontmatter variations
+# ---------------------------------------------------------------------------
+PYTHON_SCRIPT=$(cat <<'PYEOF'
+import sys
+import os
+import re
+from datetime import date
+
+try:
+    import yaml
+    HAS_YAML = True
+except ImportError:
+    HAS_YAML = False
+
+def parse_frontmatter_yaml(text):
+    """Parse YAML frontmatter block. Returns dict or None."""
+    m = re.match(r'^---\s*\n(.*?)\n---\s*\n', text, re.DOTALL)
+    if not m:
+        return None
+    raw = m.group(1)
+    if HAS_YAML:
+        try:
+            return yaml.safe_load(raw)
+        except Exception:
+            pass
+    # Regex fallback - handles simple scalar values, quoted strings, arrays
+    result = {}
+    for line in raw.splitlines():
+        line = line.rstrip()
+        if not line or line.startswith('  ') or line.startswith('\t'):
+            continue
+        # key: value
+        km = re.match(r'^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)', line)
+        if not km:
+            continue
+        key = km.group(1).strip()
+        val = km.group(2).strip()
+        # Strip quotes
+        if (val.startswith('"') and val.endswith('"')) or \
+           (val.startswith("'") and val.endswith("'")):
+            val = val[1:-1]
+        # Inline list [a, b, c]
+        if val.startswith('[') and val.endswith(']'):
+            inner = val[1:-1]
+            parts = [p.strip().strip('"').strip("'") for p in inner.split(',')]
+            result[key] = parts
+        elif val:
+            result[key] = val
+    return result if result else None
+
+def get(fm, *keys, default=''):
+    """Case-insensitive multi-key lookup with fallback."""
+    if not fm:
+        return default
+    for k in keys:
+        # direct
+        if k in fm:
+            v = fm[k]
+            return str(v) if v is not None else default
+        # case-insensitive
+        for fk, fv in fm.items():
+            if fk.lower() == k.lower():
+                return str(fv) if fv is not None else default
+    return default
+
+def read_file(path):
+    try:
+        with open(path, encoding='utf-8', errors='replace') as f:
+            return f.read()
+    except OSError:
+        return ''
+
+def collect_md(folder):
+    """Yield (path, frontmatter_dict, domain) for all .md files in folder TREE.
+
+    Walks recursively so domain subfolders ({type}/<domain>/*.md) are picked up.
+    domain = frontmatter 'domain' if present, else the immediate subfolder name
+    under `folder` (e.g. 'engineering'), else 'unknown'."""
+    if not os.path.isdir(folder):
+        return
+    for root, dirs, files in os.walk(folder):
+        dirs.sort()
+        for fname in sorted(files):
+            if not fname.endswith('.md'):
+                continue
+            fpath = os.path.join(root, fname)
+            text = read_file(fpath)
+            fm = parse_frontmatter_yaml(text) or {}
+            dom = get(fm, 'domain', default='')
+            if not dom:
+                relsub = os.path.relpath(root, folder)
+                dom = relsub.split(os.sep)[0] if relsub != '.' else 'unknown'
+            yield fpath, fm, dom
+
+def relpath(ai_memory_root, abspath):
+    """Return path relative to the vault root (parent of AI-Memory parent)."""
+    try:
+        vault_root = os.path.dirname(os.path.dirname(os.path.dirname(ai_memory_root)))
+        return os.path.relpath(abspath, vault_root)
+    except ValueError:
+        return abspath
+
+def write_index(path, header, lines):
+    with open(path, 'w', encoding='utf-8') as f:
+        f.write(header + '\n')
+        for line in lines:
+            f.write(line + '\n')
+    return len(lines)
+
+def main(ai_memory, index_dir, generated_date):
+    HDR = f"# Generated by regen-ai-memory-index.sh on {generated_date}. DO NOT EDIT."
+
+    # -----------------------------------------------------------------------
+    # failures-by-pattern.txt
+    # Format: <pattern> | <domain> | <severity> | <date> | <agent> | <path>
+    # Sorted: pattern asc, date desc
+    # -----------------------------------------------------------------------
+    failures_folder = os.path.join(ai_memory, 'failures')
+    rows_f = []
+    for fpath, fm, dom in collect_md(failures_folder):
+        pattern   = get(fm, 'pattern', default='unknown')
+        severity  = get(fm, 'severity', default='unknown')
+        created   = get(fm, 'created', 'date', default='unknown')
+        agent     = get(fm, 'agent', 'Agent', default='unknown')
+        rel       = relpath(ai_memory, fpath)
+        rows_f.append((pattern, dom, severity, str(created), agent, rel))
+    rows_f.sort(key=lambda r: (r[0], r[3] if r[3] != 'unknown' else '0000'), reverse=False)
+    # secondary sort date desc within same pattern
+    from itertools import groupby
+    sorted_f = []
+    for pat, group in groupby(sorted(rows_f, key=lambda r: r[0]), key=lambda r: r[0]):
+        group_list = sorted(list(group), key=lambda r: r[3], reverse=True)
+        sorted_f.extend(group_list)
+    lines_f = [f"{r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]} | {r[5]}" for r in sorted_f]
+    n_f = write_index(os.path.join(index_dir, 'failures-by-pattern.txt'), HDR, lines_f)
+
+    # -----------------------------------------------------------------------
+    # sessions-by-agent.txt
+    # Format: <agent> | <domain> | <date> | <outcome> | <tokens> | <path>
+    # -----------------------------------------------------------------------
+    sessions_folder = os.path.join(ai_memory, 'sessions')
+    rows_s = []
+    for fpath, fm, dom in collect_md(sessions_folder):
+        agent   = get(fm, 'agent', 'Agent', default='unknown')
+        created = get(fm, 'created', 'date', default='unknown')
+        outcome = get(fm, 'outcome', default='unknown')
+        tokens  = get(fm, 'tokens', default='unknown')
+        rel     = relpath(ai_memory, fpath)
+        rows_s.append((agent, dom, str(created), outcome, tokens, rel))
+    rows_s.sort(key=lambda r: (r[0], r[1], r[2]), reverse=False)
+    lines_s = [f"{r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]} | {r[5]}" for r in rows_s]
+    n_s = write_index(os.path.join(index_dir, 'sessions-by-agent.txt'), HDR, lines_s)
+
+    # -----------------------------------------------------------------------
+    # patterns-by-domain.txt
+    # Format: <domain> | <date> | <evidence_count> | <path>
+    # -----------------------------------------------------------------------
+    patterns_folder = os.path.join(ai_memory, 'patterns')
+    rows_p = []
+    for fpath, fm, dom in collect_md(patterns_folder):
+        domain   = dom or 'unknown'
+        created  = get(fm, 'created', 'date', default='unknown')
+        evidence = get(fm, 'evidence_count', 'evidenceCount', default='unknown')
+        rel      = relpath(ai_memory, fpath)
+        rows_p.append((domain, str(created), evidence, rel))
+    rows_p.sort(key=lambda r: (r[0], r[1]), reverse=False)
+    lines_p = [f"{r[0]} | {r[1]} | {r[2]} | {r[3]}" for r in rows_p]
+    n_p = write_index(os.path.join(index_dir, 'patterns-by-domain.txt'), HDR, lines_p)
+
+    # -----------------------------------------------------------------------
+    # orchestrations-by-shape.txt
+    # Format: <shape-keyword> | <domain> | <date> | <agent> | <path>
+    # shape derived from: tags list, parallelism_factor, title keywords
+    # -----------------------------------------------------------------------
+    orchestrations_folder = os.path.join(ai_memory, 'orchestrations')
+    rows_o = []
+    for fpath, fm, dom in collect_md(orchestrations_folder):
+        created  = get(fm, 'created', 'date', default='unknown')
+        # agent: try agents_used list first, then agent scalar
+        agents_used = fm.get('agents_used') or fm.get('Agents_used')
+        if isinstance(agents_used, list):
+            agent_val = ','.join(str(a) for a in agents_used[:3])
+            if len(agents_used) > 3:
+                agent_val += f'+{len(agents_used)-3}more'
+        else:
+            agent_val = get(fm, 'agent', 'Agent', default='unknown')
+        # shape keyword: derive from tags, parallelism_factor, title
+        tags = fm.get('tags') or []
+        if isinstance(tags, str):
+            tags = [tags]
+        parallelism = get(fm, 'parallelism_factor', 'parallelismFactor', default='')
+        title = get(fm, 'title', default='')
+        # Build shape: prefer explicit tag like activity/orchestration; else infer
+        shape_parts = []
+        if parallelism and parallelism not in ('', 'unknown'):
+            shape_parts.append(f'parallel-{parallelism}x')
+        # Extract notable keywords from title
+        title_lower = title.lower()
+        for kw in ('fan-out', 'fanout', 'parallel', 'sequential', 'wave', 'audit', 'sprint', 'pipeline'):
+            if kw in title_lower:
+                shape_parts.append(kw)
+                break
+        shape = '-'.join(shape_parts) if shape_parts else 'untagged'
+        rel = relpath(ai_memory, fpath)
+        rows_o.append((shape, dom, str(created), agent_val, rel))
+    rows_o.sort(key=lambda r: (r[0], r[1], r[2]), reverse=False)
+    lines_o = [f"{r[0]} | {r[1]} | {r[2]} | {r[3]} | {r[4]}" for r in rows_o]
+    n_o = write_index(os.path.join(index_dir, 'orchestrations-by-shape.txt'), HDR, lines_o)
+
+    print(f"[regen-ai-memory-index] failures={n_f} sessions={n_s} patterns={n_p} orchestrations={n_o}")
+    print(f"[regen-ai-memory-index] index written to: {index_dir}")
+
+if __name__ == '__main__':
+    ai_memory  = sys.argv[1]
+    index_dir  = sys.argv[2]
+    gen_date   = sys.argv[3]
+    main(ai_memory, index_dir, gen_date)
+PYEOF
+)
+
+# ---------------------------------------------------------------------------
+# Run
+# ---------------------------------------------------------------------------
+python3 - "$AI_MEMORY" "$INDEX_DIR" "$GENERATED_DATE" <<< "$PYTHON_SCRIPT"

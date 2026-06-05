@@ -1,0 +1,99 @@
+# CLAUDE Local Override - Example
+
+> Copy this file to `CLAUDE.local.md` (drop the `.example`) to add member/instance-specific
+> Claude Code configuration. This file is gitignored - local to your machine only.
+>
+> This file is loaded AFTER `CLAUDE.md`. Add member-specific routing, MCP servers,
+> model preferences. NEVER duplicate content from `CLAUDE.md` here.
+
+---
+
+## Member identity
+
+<!-- Configure who you are so session logs use the right owner. -->
+
+```
+owner: <your-name-or-handle>
+```
+
+---
+
+## Dispatch & Routing (local additions)
+
+<!-- Add instance-specific skill routes here. Examples below. -->
+
+### [CONFIGURE: your MCP servers and tool routing]
+
+<!--
+Example for a team using an ERP integration:
+
+### ERP routing
+
+| User intent | Route to |
+|---|---|
+| ERP model lookup, field inspection | MCP `erp-semantic:entity_lookup` |
+| ERP code review | Skill `erp-code-reviewer` |
+| ERP feature development | Skill `erp-coder` |
+
+MCP servers available locally:
+- `erp-semantic` - semantic search over ERP source code
+- `erp-live` - live ERP instance (read/write, careful!)
+-->
+
+### [CONFIGURE: local model delegation (if any)]
+
+<!--
+Example for a team with a local Ollama instance:
+
+## Local model delegation
+
+Server: http://localhost:11434 (Qwen2.5-Coder 7B)
+
+Use `generate_code` for:
+- Boilerplate XML views, computed fields, unit test stubs
+- Simple CRUD overrides
+
+Use `complete_code` (FIM) when you have prefix + suffix:
+- Filling in a method body given surrounding context
+
+Do NOT delegate:
+- Cross-file refactor, architecture decisions, PR review
+-->
+
+---
+
+## Vault entry trigger additions
+
+<!-- Add company/project-specific vault triggers beyond the default 7. -->
+
+<!--
+Example:
+
+8. Mentions `[YOUR PRODUCT NAME]` (the main product)
+9. Mentions customer names in your CRM notes
+10. Mentions competitor names documented in `Resources/Competitors/`
+-->
+
+---
+
+## Write boundaries (local additions)
+
+<!-- Add any paths this instance is allowed to write to beyond the defaults. -->
+
+<!--
+Default write boundaries (from CLAUDE.md):
+- Inbox/
+- Engineering/AI-Memory/
+- Daily/
+
+Example addition for a sales team member:
+- Sales/Customers/<your-assigned-accounts>/  (append-only)
+-->
+
+---
+
+## Notes
+
+- Do not commit this file - it is gitignored.
+- When you upgrade the vault (pull from upstream), re-verify your local config is still compatible.
+- If you change MCP server URLs or model endpoints, update this file, not CLAUDE.md.

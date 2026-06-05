@@ -1,0 +1,122 @@
+## Mandatory context
+
+### Work Ethos - always apply (mandatory, every task, every domain)
+
+Core principles for every AI agent - engineering, sales, marketing, operations, strategy.
+Full version with examples - MUST READ every session start.
+
+@${VAULT_PATH}/ETHOS.md
+
+---
+
+## Optional local override (member customizations, gitignored)
+
+@${VAULT_PATH}/CLAUDE.local.md
+
+---
+
+## Dispatch & Routing Layer - main agent orchestrator rules (mandatory)
+
+### Core principles
+
+**Typical routing pattern**: `main agent -> invoke skill -> skill may launch subagent`. Do NOT go deeper (see Crash Prevention).
+
+**Prompt naturalness**: User does NOT say skill/tool names. They state intent/needs/wants/outcomes.
+Skill descriptions (already optimized) must match intent automatically.
+- **Pro user**: clear intent + context -> match top-1 skill direct, invoke immediately
+- **Non-pro user**: vague -> main agent asks 1-2 natural clarifying questions (do NOT list "skill A or B")
+
+### Dispatch Decision Tree
+
+| User intent | Route to |
+|---|---|
+| Vault/knowledge-base/strategy/OKR/temporal reference ("last week", "decision before") | Skill `vault-research` |
+| Code review (general) | Skill `/code-review:code-review` |
+| Security/XSS/SQL injection check | Skill `/code-review:security-review` |
+| Feature add with codebase exploration | Agent `feature-dev:code-explorer` (built-in) |
+| Automation/hook/MCP/plugin dev | Skill `plugin-dev:*` |
+| Browser perf/a11y/leak debug | Skill `chrome-devtools-mcp:*` |
+| PR/issue/GitHub workflow | Skill `github:*` (slash) |
+| Web search/scrape | `WebSearch`/`WebFetch` |
+| UI/landing page/component design | Skill `frontend-design` |
+| Create skill/agent/plugin | Skill `skill-creator` or `plugin-dev:*` |
+| Memory writeback (see threshold below) | `vault-session-end` / `vault-failure-log` / `vault-pattern-extract` / `vault-orchestration-log` |
+| Ambiguous (>=3 skill candidates with similar confidence) | Skill `skill-router` (safety net, silent) |
+| Coding touching git (any repo) | Phase 0 `repo-capability-discovery` -> wave `multi-subagent-wave-orchestration` |
+
+Plugin capability matrix: `${VAULT_PATH}/Engineering/AI-Memory/agent-profiles/shared-conventions.md` -> "Plugin Capability Matrix".
+
+### Model Tier Matrix
+
+| Tier | When to use | Example tasks | Note |
+|---|---|---|---|
+| **Haiku** | Read-only lookup, classification, simple Q&A | Grep, list files, classify intent | Careful: over-caution on write tasks |
+| **Sonnet** (default) | Write task, edit, single-file refactor, review | Most everyday tasks | Floor for write tasks |
+| **Opus** | Cross-file refactor, orchestration parent, gap analysis | Wave parent, multi-file design | Max 3 concurrent (RAM) |
+
+### Crash Prevention - Agent-Spawn Nesting Rule
+
+The restriction is on **nested SPAWN AGENT depth**, NOT on subagents using skills.
+Skills themselves do not count as a tier; only skills that spawn agents create a new tier.
+
+- **Max 2 spawn tiers**: main (tier 0) -> subagent (tier 1) -> subagent (tier 2) is the ceiling.
+  Tier 3+ = crash (nested context). Example forbidden chain: main -> subagent -> skill (spawn) -> subagent = tier 3.
+- **Subagents MAY invoke appropriate skills** provided the skill does NOT itself spawn a subagent.
+- **Skills that launch subagents -> only call from main (tier 0)**, NOT from within a subagent:
+  `skill-creator`, `command-development`, `multi-subagent-wave-orchestration`, `/code-review` ultra (cloud fan-out).
+- **Unsure if a skill spawns agents -> treat as YES** (fail-safe).
+- **Subagent prompt template** MUST include: "May use appropriate skill IF it does not itself spawn a sub-agent; do NOT spawn sub-agents."
+
+### Disambiguation Interaction Pattern
+
+- Pro user prompt with clear intent -> match top-1 -> invoke immediately (no question)
+- Non-pro vague -> ask 1-2 natural clarifying questions before routing
+- >=3 candidates with similar confidence -> invoke `skill-router` silent (do not ask user "skill A or B")
+- **Outcome-first interpretation**: parse intent -> identify outcome -> match skill; do NOT match keyword to tool name
+
+### Memory Writeback Threshold
+
+Invoke log skill when:
+- **`vault-session-end`**: >=3 non-trivial tool calls AND outcome produced (file edit, plan, decision)
+- **`vault-failure-log`**: failed call needing rework OR same error >=2 times
+- **`vault-pattern-extract`**: approach reused >=3 sessions OR explicit user request
+- **`vault-orchestration-log`**: multi-wave OR multi-CLI pipeline success
+- **Floor**: skip if session <5 min and read-only
+
+---
+
+### Git Discipline - Principal Branch Lock (mandatory, every git repo)
+
+- Do NOT `git checkout/switch/commit/rebase/merge/pull/reset --hard` on the principal branch
+  (the branch the user is on at start) unless the user explicitly names the branch.
+- Task instruction ("fix X", "implement feature Y") != branch instruction.
+  Only an explicit branch name is a branch instruction.
+- Need different branch state (including new feature) -> `git worktree add` session-scoped path,
+  do NOT `git checkout -b` on the principal repo.
+- Subagent inherits: prompt must include "DO NOT git checkout/switch/commit unless instructed; use worktree".
+- Read-only OK (`git log/diff/status/show/blame`); run `git status --short` + `git rev-parse --abbrev-ref HEAD`
+  before the first git operation.
+
+---
+
+## Vault Entry Rule
+
+Vault entry (`Home.md` -> MOC -> notes) is mandatory if the prompt matches any condition:
+
+1. Mentions: `vault`, `Inbox`, `Home`, `MOC`
+2. CEO/OKR/strategy/brief/decision keyword
+3. Temporal: "last week", "before", "what did we decide"
+4. Cross-session memory keywords: pattern, failure, orchestration, session-report
+5. Path under `${VAULT_PATH}/` is referenced
+
+Outside the whitelist -> do NOT auto-load Home.md (saves tokens).
+Traversal: Home -> MOC-<Domain> -> specific notes. Do NOT random-search the vault.
+
+---
+
+## Cross-session memory bridge
+
+Single source of memory for all AI runtimes = `${VAULT_PATH}/Engineering/AI-Memory/` (committed to GitHub).
+- **Read**: SessionStart hook injects digest + self-heals symlinks.
+- **Write**: skills `vault-session-end` / `vault-failure-log` / `vault-pattern-extract` / `vault-orchestration-log`.
+- **Auto-memory**: raw entries go to `${VAULT_PATH}/Engineering/AI-Memory/auto/`.

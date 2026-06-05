@@ -1,0 +1,22 @@
+{
+  "items": [
+    {
+      "type": "file",
+      "ctime": 0,
+      "path": "Meta/Home.md",
+      "title": "Home"
+    },
+    {
+      "type": "folder",
+      "ctime": 0,
+      "path": "Inbox",
+      "title": "Inbox"
+    },
+    {
+      "type": "folder",
+      "ctime": 0,
+      "path": "Projects",
+      "title": "Projects"
+    }
+  ]
+}

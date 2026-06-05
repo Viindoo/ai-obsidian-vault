@@ -1,0 +1,45 @@
+{
+  "trigger_auto_manual": "Automatic",
+  "use_regex_to_check_for_tags": false,
+  "statusBar_trigger_indicator": true,
+  "folder_tag_pattern": [
+    {
+      "folder": "Strategy/Briefs",
+      "tag": "#activity/brief",
+      "pattern": ""
+    },
+    {
+      "folder": "Sales/Pipeline",
+      "tag": "#activity/deal",
+      "pattern": ""
+    },
+    {
+      "folder": "Marketing/Campaigns",
+      "tag": "#activity/campaign",
+      "pattern": ""
+    },
+    {
+      "folder": "Operations/Meetings",
+      "tag": "#activity/meeting",
+      "pattern": ""
+    },
+    {
+      "folder": "Resources/Competitors",
+      "tag": "#activity/competitor",
+      "pattern": ""
+    },
+    {
+      "folder": "Resources/Research",
+      "tag": "#activity/research",
+      "pattern": ""
+    }
+  ],
+  "excluded_folder": [
+    {"folder": "Daily"},
+    {"folder": "Templates"},
+    {"folder": "Archive"},
+    {"folder": "_assets"},
+    {"folder": "_index"},
+    {"folder": "_dataview"}
+  ]
+}

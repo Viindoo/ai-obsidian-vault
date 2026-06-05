@@ -1,0 +1,35 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${HOME}/.claude/hooks/cc-session-start-memory.sh"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "${HOME}/.claude/hooks/session-end-prompt.sh"
+          }
+        ]
+      }
+    ]
+  },
+  "autoMemoryDirectory": "${VAULT_PATH}/Engineering/AI-Memory/auto",
+  "permissions": {
+    "allow": [],
+    "deny": []
+  },
+  "mcpServers": {
+    "filesystem": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem", "${VAULT_PATH}"]
+    }
+  }
+}

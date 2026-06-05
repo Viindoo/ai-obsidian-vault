@@ -1,0 +1,14 @@
+[Unit]
+Description=Auto-commit + push Obsidian vault to GitHub (with flock)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=__VAULT__
+Environment=HOME=__HOME__
+Environment=GIT_SSH_COMMAND=/usr/bin/ssh
+ExecStart=/usr/bin/flock -n /tmp/ai-vault-push.lock /bin/bash -c 'cd __VAULT__; if ! git diff --quiet --cached || ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then git add -A && git commit -m "vault: systemd auto-backup $(date +%%F-%%H%%M)" || true; fi; git pull --rebase=false --autostash origin master && git push origin master'
+SuccessExitStatus=1
+StandardOutput=journal
+StandardError=journal

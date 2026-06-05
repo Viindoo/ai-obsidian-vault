@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- macOS launchd equivalent of ai-vault-push.service + .timer         -->
+<!-- Placeholders: __VAULT__ and __HOME__ are replaced by wire-runtimes.sh    -->
+<!-- Install: cp this file to ~/Library/LaunchAgents/com.ai-vault.autopush.plist -->
+<!--          then: launchctl load ~/Library/LaunchAgents/com.ai-vault.autopush.plist -->
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.ai-vault.autopush</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/bin/bash</string>
+    <string>-c</string>
+    <string>cd __VAULT__ &amp;&amp; if ! git diff --quiet --cached || ! git diff --quiet || [ -n "$(git ls-files --others --exclude-standard)" ]; then git add -A &amp;&amp; git commit -m "vault: launchd auto-backup $(date +%F-%H%M)" || true; fi; git pull --rebase=false --autostash origin master &amp;&amp; git push origin master</string>
+  </array>
+
+  <key>WorkingDirectory</key>
+  <string>__VAULT__</string>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>HOME</key>
+    <string>__HOME__</string>
+    <key>PATH</key>
+    <string>/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin</string>
+  </dict>
+
+  <!-- Run every 30 minutes (1800 seconds) -->
+  <key>StartInterval</key>
+  <integer>1800</integer>
+
+  <!-- Run on load and after reboots if a scheduled run was missed -->
+  <key>RunAtLoad</key>
+  <false/>
+
+  <key>StandardOutPath</key>
+  <string>__HOME__/.local/share/ai-vault/autopush.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>__HOME__/.local/share/ai-vault/autopush-error.log</string>
+</dict>
+</plist>

@@ -1,0 +1,59 @@
+# ETHOS Local Override - Example
+
+> Copy this file to `ETHOS.local.md` (drop the `.example`) to add member/instance-specific
+> ethos extensions. This file is gitignored - local to your machine only.
+>
+> This file is loaded AFTER `ETHOS.md`. Add extensions, not replacements.
+> NEVER duplicate content from `ETHOS.md` here - only add what is specific to your context.
+
+---
+
+## Local extensions
+
+<!-- Example: add company-specific tool delegation rules below. -->
+<!-- Replace the placeholder blocks with your actual content. -->
+
+### [CONFIGURE: delegation rules for your local AI tools]
+
+<!--
+Example for a team using an internal code-assist model:
+
+## Ollama / local model delegation
+
+Use the internal code-assist model for:
+- Boilerplate: computed fields, default_get, CRUD overrides, unit test scaffold
+- FIM (fill-in-middle): when you have prefix + suffix context
+
+Do NOT delegate to local model:
+- Cross-file refactor
+- Architecture decisions
+- Anything requiring full project context
+-->
+
+### [CONFIGURE: cost / model tier rules specific to your subscription]
+
+<!--
+Example:
+
+## Model tier policy (local)
+
+| Tier   | When to use                         |
+|--------|-------------------------------------|
+| Haiku  | Read-only lookup, classification    |
+| Sonnet | Write tasks, single-file edits      |
+| Opus   | Cross-file refactor, wave parent    |
+
+Max 3 Opus instances concurrently (RAM).
+-->
+
+### [CONFIGURE: any domain-specific principles for your company]
+
+<!--
+Example for a SaaS team:
+
+## SaaS multi-tenancy safety (always apply)
+
+Every code path that touches data MUST be scoped to the active tenant.
+Never use `sudo` or `with_context(active_test=False)` in production code paths.
+Test: "Does this query work if tenant A's data is completely absent from the DB?"
+-->
