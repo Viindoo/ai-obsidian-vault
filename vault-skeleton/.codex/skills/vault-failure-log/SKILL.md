@@ -1,6 +1,6 @@
 ---
 name: vault-failure-log
-description: Capture a non-trivial failure as a failure-log note (root cause + lesson + prevention recipe) so the same trap is not repeated.
+description: Capture a non-trivial failure as a failure-log note (root cause + lesson + prevention recipe) so the same trap is not repeated. When the saved content IS a tooling/build/deploy/agent failure, use this skill, NOT vault-capture, even if phrased as a generic save intent ("ghi lại vụ này", "lưu lại bài học") - the failure content decides, not the verb.
 allowed-tools: Read Write Edit Bash
 agent: codex
 ---
