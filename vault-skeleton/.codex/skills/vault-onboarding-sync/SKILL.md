@@ -1,13 +1,7 @@
 ---
-title: "vault-onboarding-sync"
-type: skill
-domain: knowledge
-status: active
-tags: [domain/knowledge, activity/reference, status/active]
-summary: "Skill to detect and patch drift between SETUP-NEW-MACHINE.md and the canonical infrastructure files (ETHOS.md, CLAUDE.md, AGENTS.md, GEMINI.md, hooks, skills, systemd units). Proposes targeted section updates and bumps last-verified when user confirms."
-created: 2026-01-01
-updated: 2026-01-01
-owner: <owner>
+name: vault-onboarding-sync
+description: Detect and patch drift between Meta/SETUP-NEW-MACHINE.md and the canonical vault infrastructure files (ETHOS.md, CLAUDE.md, AGENTS.md, GEMINI.md, PII pre-commit hook, skills directories, systemd units). Trigger when the user asks to verify, sync, or update the setup/onboarding guide - "setup guide outdated", "sync setup", "verify setup", "check onboarding", "update the setup guide", "guide bị lạc hậu", "cập nhật hướng dẫn cài máy mới", "kiểm tra guide onboarding" - after significant infrastructure changes (new skill added, hook pattern changed, CLI version bump, systemd unit edited), when GitHub Actions setup-guide-drift.yml flags a warning, or when last-verified in SETUP-NEW-MACHINE.md frontmatter is more than 30 days old. Proposes targeted section patches and bumps last-verified only after user confirmation. Do NOT trigger for general vault research, writing new notes, or session-end capture.
+allowed-tools: Read Grep Glob Edit Bash
 agent: codex
 ---
 
